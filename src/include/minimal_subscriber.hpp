@@ -12,6 +12,7 @@ class MinimalSubscriber : public rclcpp::Node
   private:
     void topic_callback(const sensor_msgs::msg::PointCloud2::SharedPtr point_cloud2_msgs) const;
     rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr subscription_;
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher_;
 };
 
 #endif

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+    <profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles" >
+        <transport_descriptors>
+            <transport_descriptor>
+                <transport_id>CustomUdpTransport</transport_id>
+                <type>UDPv4</type>
+            </transport_descriptor>
+        </transport_descriptors>
+
+        <participant profile_name="participant_profile" is_default_profile="true">
+            <rtps>
+                <userTransports>
+                    <transport_id>CustomUdpTransport</transport_id>
+                </userTransports>
+
+                <useBuiltinTransports>false</useBuiltinTransports>
+            </rtps>
+        </participant>
+    </profiles>
+
+<!-- 
+        This fast-DDS settings file will disable shared memory usage.
+        Use this command to enable the settings: 
+                export FASTRTPS_DEFAULT_PROFILES_FILE=/workspaces/lidar_perception_ws/fastDDS_setting.xml
+-->

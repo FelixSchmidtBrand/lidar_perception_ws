@@ -46,6 +46,8 @@
         "DCMAKE",
         "deque",
         "devcontainer",
+        "EIGEN",
+        "FMCW",
         "ints",
         "noqa",
         "pytest",

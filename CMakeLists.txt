@@ -26,6 +26,8 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(pcl_conversions REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 #link_directories(${PCL_LIBRARY_DIRS})
 #add_definitions(${PCL_DEFINITIONS})
@@ -44,7 +46,7 @@ add_executable(listener ${SOURCES})
 
 target_link_libraries(pointfilter ${PCL_LIBRARIES})
 target_link_libraries(listener ${PCL_LIBRARIES}) 
-ament_target_dependencies(pointfilter rclcpp std_msgs pcl_conversions)
+ament_target_dependencies(pointfilter rclcpp std_msgs pcl_conversions tf2 tf2_ros)
 ament_target_dependencies(listener rclcpp sensor_msgs pcl_conversions)
 
 install(TARGETS

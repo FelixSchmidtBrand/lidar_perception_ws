@@ -5,8 +5,14 @@
 #include <functional>
 #include <chrono>
 
+#include <Eigen/Geometry> 
+
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
+#include <tf2/exceptions.h>
 
 #include "PointXYZVI.hpp"
 
@@ -17,13 +23,15 @@
 
 #include "pcl_conversions/pcl_conversions.h"
 
+
 using namespace std::chrono_literals;
 
 /* The PointFilter node filters unimportent points based on three criteria:
-1. RoI: The region of interest is described by a box. All points inside this box are considered relevant.
+1. RoI: The region of interest is described by a box. All points inside this box are considered relevant. The parameters of the box
+are described in world coordinates. Thus, a transformation from sensor to world needs to be given. It is recommended to set the world 
+coordinate system onto the road surface. This allows you to easily remove the ground points by defining a box just a bit higher then the road surface.
 2. Velocity: All points with low absolute velocity are filtered (considered to be background - especially useful, if the sensor itself does not move).
-3. Ground Plane removal: All points close to the ground plane are removed. 
-*/
+**/
 class PointFilter : public rclcpp::Node
 {
   public:
@@ -34,6 +42,10 @@ class PointFilter : public rclcpp::Node
       "input_cloud", 10, std::bind(&PointFilter::topic_callback, this, std::placeholders::_1)
       );
       publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("filtered_cloud", 10); 
+      
+      //tf2 listener
+      tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+      transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
       
       //filter objects and their parameter
       cropBoxFilter_ = new pcl::CropBox<PointXYZVI>();
@@ -79,6 +91,11 @@ class PointFilter : public rclcpp::Node
     
     rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr subscription_;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr publisher_;
+    
+    //tf2 listener
+    std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
+    std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
+    
     //filter elements
     pcl::CropBox<PointXYZVI> * cropBoxFilter_;
     Eigen::Vector4f min_pt;
@@ -104,6 +121,31 @@ class PointFilter : public rclcpp::Node
       pcl::PointCloud<PointXYZVI> cloud_out;
       pcl::PointCloud<PointXYZVI> input_cloud;
       fromROSMsg(*point_cloud2_msgs, input_cloud);
+      
+      //---------tf2 transformation------------
+      //this stuff should be done with pcl_ros as soon as a filter transformation is available.
+      geometry_msgs::msg::TransformStamped transformStamped;
+      try {
+          transformStamped = tf_buffer_->lookupTransform(
+            "world", "aeva_point_cloud",
+            tf2::TimePointZero);
+        } catch (tf2::TransformException & ex) {
+          RCLCPP_INFO(
+            this->get_logger(), "Could not transform %s to %s: %s",
+            "world", "aeva_point_cloud", ex.what());
+          return;
+        }
+      Eigen::Affine3f transform;
+      Eigen::AngleAxisf rotation; 
+      Eigen::Quaternion<float> quat(transformStamped.transform.rotation.w,
+                          transformStamped.transform.rotation.x,
+                          transformStamped.transform.rotation.y,
+                          transformStamped.transform.rotation.z);
+      rotation = quat;
+      Eigen::Translation<float,3> translation(transformStamped.transform.translation.x, transformStamped.transform.translation.y, transformStamped.transform.translation.z);
+      Eigen::Transform<float,3,Eigen::Affine> t;
+      t = translation * rotation;
+      cropBoxFilter_->setTransform(t);  
       
       //---------filter-------------
       //I don't like copying the data, but I have not found another way to get the pointcloud behind a shared Ptr. Improvements are very much appreciated.

@@ -47,12 +47,14 @@ class PointFilter : public rclcpp::Node
       tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
       transform_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
       
-      //filter objects and their parameter
+      //filter objects
       cropBoxFilter_ = new pcl::CropBox<PointXYZVI>();
       vel_filter_ = new pcl::PassThrough<PointXYZVI>();
       vel_filter_ ->setFilterFieldName("velocity");
       vel_filter_ ->setNegative(true);
-
+      
+      //parameters
+      this->declare_parameter<std::string>("input_frame", "input_frame");
       this->declare_parameter<float>("box_min_x", 0.f);
       this->declare_parameter<float>("box_min_y", 0.f);
       this->declare_parameter<float>("box_min_z", -10.f);
@@ -69,6 +71,7 @@ class PointFilter : public rclcpp::Node
 
     void setParameters()
     {
+      this->get_parameter("input_frame", fromFrameRel);
       this->get_parameter("box_min_x", box_min_x);
       this->get_parameter("box_min_y", box_min_y);
       this->get_parameter("box_min_z", box_min_z);
@@ -95,6 +98,11 @@ class PointFilter : public rclcpp::Node
     //tf2 listener
     std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
     std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
+
+    
+    //listener parameters
+    std::string fromFrameRel;
+    std::string toFrameRel = "world";
     
     //filter elements
     pcl::CropBox<PointXYZVI> * cropBoxFilter_;
@@ -127,23 +135,24 @@ class PointFilter : public rclcpp::Node
       geometry_msgs::msg::TransformStamped transformStamped;
       try {
           transformStamped = tf_buffer_->lookupTransform(
-            "world", "aeva_point_cloud",
+            toFrameRel, fromFrameRel,
             tf2::TimePointZero);
         } catch (tf2::TransformException & ex) {
           RCLCPP_INFO(
             this->get_logger(), "Could not transform %s to %s: %s",
-            "world", "aeva_point_cloud", ex.what());
+            toFrameRel, fromFrameRel, ex.what());
           return;
         }
+      
       Eigen::Affine3f transform;
-      Eigen::AngleAxisf rotation; 
+      Eigen::AngleAxisf rotation;
+      Eigen::Transform<float,3,Eigen::Affine> t;
       Eigen::Quaternion<float> quat(transformStamped.transform.rotation.w,
                           transformStamped.transform.rotation.x,
                           transformStamped.transform.rotation.y,
                           transformStamped.transform.rotation.z);
       rotation = quat;
       Eigen::Translation<float,3> translation(transformStamped.transform.translation.x, transformStamped.transform.translation.y, transformStamped.transform.translation.z);
-      Eigen::Transform<float,3,Eigen::Affine> t;
       t = translation * rotation;
       cropBoxFilter_->setTransform(t);  
       

@@ -1,6 +1,22 @@
-# VSCode ROS2 Workspace Template
+# Title
 
-This template will get you set up using ROS2 with VSCode as your IDE.
+This repo provides a ros2 pipeline to generate tracked objects from FMCW lidar point clouds.
+The FMCW lidar technology provides a doppler velocity measurement for every point in the cloud. This pipeline makes use of this additional information to generate a list of tracked objects.
+
+## Usage
+
+## Backround
+
+The [Point-Cloud-Library (PCL)](https://pointclouds.org/) is a very common library for point cloud processing. This [repo] https://github.com/ros-perception/perception_pcl provides converters between the ROS PointCloud2 format and PCL. Since the point types in PCL are templated, you can add additional point formats.
+This [link](https://pcl.readthedocs.io/projects/tutorials/en/latest/adding_custom_ptype.html) provides a tutorial on how to extend the point types in PCL. The PointXYZVI.hpp in this repo is based on this tutorial and provides a new point type which includes the doppler velocity from the FMCW lidar.
+
+Both, PCL (version 1.10) and pcl-conversions are available as apt packages and have been added to the docker image.
+
+
+
+## VSCode ROS2 Workspace Template
+
+This code is based on a template which gets you set up using ROS2 with VSCode as your IDE.
 
 See [how I develop with vscode and ros2](https://www.allisonthackston.com/articles/vscode_docker_ros2.html) for a more in-depth look on how to use this workspace.
 

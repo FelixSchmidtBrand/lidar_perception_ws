@@ -65,7 +65,7 @@ class PointFilter : public rclcpp::Node
       this->declare_parameter<float>("vel_max", 0.1f);
 
       timer_ = this->create_wall_timer(
-      1000ms, std::bind(&PointFilter::setParameters, this));
+      30000ms, std::bind(&PointFilter::setParameters, this));
       setParameters();
     }
 
@@ -140,7 +140,7 @@ class PointFilter : public rclcpp::Node
         } catch (tf2::TransformException & ex) {
           RCLCPP_INFO(
             this->get_logger(), "Could not transform %s to %s: %s",
-            toFrameRel, fromFrameRel, ex.what());
+            toFrameRel.c_str(), fromFrameRel.c_str(), ex.what());
           return;
         }
       
@@ -157,7 +157,7 @@ class PointFilter : public rclcpp::Node
       cropBoxFilter_->setTransform(t);  
       
       //---------filter-------------
-      //I don't like copying the data, but I have not found another way to get the pointcloud behind a shared Ptr. Improvements are very much appreciated.
+      //I don't like copying the data, but I have not found another way to get the pointcloud behind a shared Ptr.
       pcl::PointCloud<PointXYZVI>::Ptr boxfilter_cloud(new pcl::PointCloud<PointXYZVI>(input_cloud));
       pcl::PointCloud<PointXYZVI>::Ptr vel_cloud(new pcl::PointCloud<PointXYZVI>(cloud_out));
       cropBoxFilter_ ->setInputCloud(boxfilter_cloud);

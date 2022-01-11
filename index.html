@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://FelixSchmidtBrand.github.io/lidar_perception_ws/">
       
       <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.4">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.5">
     
     
       
@@ -19,7 +19,7 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.bb3983ee.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.ee0f47ba.min.css">
       
         
         <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
@@ -60,7 +60,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#vscode-ros2-workspace-template" class="md-skip">
+        <a href="#title" class="md-skip">
           Skip to content
         </a>
       
@@ -93,7 +93,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              VSCode ROS2 Workspace Template
+              Title
             
           </span>
         </div>
@@ -213,12 +213,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          VSCode ROS2 Workspace Template
+          Title
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="." class="md-nav__link md-nav__link--active">
-        VSCode ROS2 Workspace Template
+        Title
       </a>
       
         
@@ -235,6 +235,27 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    Usage
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#backround" class="md-nav__link">
+    Backround
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vscode-ros2-workspace-template" class="md-nav__link">
+    VSCode ROS2 Workspace Template
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#features" class="md-nav__link">
@@ -367,6 +388,27 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    Usage
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#backround" class="md-nav__link">
+    Backround
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vscode-ros2-workspace-template" class="md-nav__link">
+    VSCode ROS2 Workspace Template
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#features" class="md-nav__link">
     Features
   </a>
@@ -475,8 +517,16 @@
               
                 
 
-<h1 id="vscode-ros2-workspace-template">VSCode ROS2 Workspace Template</h1>
-<p>This template will get you set up using ROS2 with VSCode as your IDE.</p>
+<h1 id="title">Title</h1>
+<p>This repo provides a ros2 pipeline to generate tracked objects from FMCW lidar point clouds.
+The FMCW lidar technology provides a doppler velocity measurement for every point in the cloud. This pipeline makes use of this additional information to generate a list of tracked objects.</p>
+<h2 id="usage">Usage</h2>
+<h2 id="backround">Backround</h2>
+<p>The <a href="https://pointclouds.org/">Point-Cloud-Library (PCL)</a> is a very common library for point cloud processing. This [repo] https://github.com/ros-perception/perception_pcl provides converters between the ROS PointCloud2 format and PCL. Since the point types in PCL are templated, you can add additional point formats.
+This <a href="https://pcl.readthedocs.io/projects/tutorials/en/latest/adding_custom_ptype.html">link</a> provides a tutorial on how to extend the point types in PCL. The PointXYZVI.hpp in this repo is based on this tutorial and provides a new point type which includes the doppler velocity from the FMCW lidar.</p>
+<p>Both, PCL (version 1.10) and pcl-conversions are available as apt packages and have been added to the docker image.</p>
+<h2 id="vscode-ros2-workspace-template">VSCode ROS2 Workspace Template</h2>
+<p>This code is based on a template which gets you set up using ROS2 with VSCode as your IDE.</p>
 <p>See <a href="https://www.allisonthackston.com/articles/vscode_docker_ros2.html">how I develop with vscode and ros2</a> for a more in-depth look on how to use this workspace.</p>
 <h2 id="features">Features</h2>
 <h3 id="style">Style</h3>
@@ -560,10 +610,10 @@
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": ".", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "assets/javascripts/workers/search.361d90f1.min.js"}</script>
+    <script id="__config" type="application/json">{"base": ".", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "assets/javascripts/workers/search.b6ff8c07.min.js"}</script>
     
     
-      <script src="assets/javascripts/bundle.289a2a4b.min.js"></script>
+      <script src="assets/javascripts/bundle.5e13d264.min.js"></script>
       
     
   </body>

@@ -17,7 +17,7 @@ endif()
 
 ## Find system dependencies
 find_package(Eigen3 REQUIRED)
-find_package(PCL REQUIRED QUIET COMPONENTS core features filters io segmentation surface)
+find_package(PCL 1.7 REQUIRED)
 find_package(Boost REQUIRED)
 
 # find ros dependencies
@@ -29,28 +29,36 @@ find_package(pcl_conversions REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 
-#link_directories(${PCL_LIBRARY_DIRS})
-#add_definitions(${PCL_DEFINITIONS})
-
 #set include paths
 include_directories(
   ${PCL_INCLUDE_DIRS}
   src/include
 )
+#PCL suggested cmake commands
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
+#set sources
 set(SOURCES src/main.cpp src/minimal_subscriber.cpp src/include/minimal_subscriber.hpp src/include/PointXYZVI.hpp) 
 set(POINTFILTER_SOURCES src/PointFilter.cpp src/include/PointXYZVI.hpp)
+set(CLUSTER_SOURCES src/ClusterBuilder.cpp src/include/PointXYZVI.hpp)
+
 #add_executable(talker src/publisher_member_function.cpp)
 add_executable(pointfilter ${POINTFILTER_SOURCES})
+add_executable(cluster ${CLUSTER_SOURCES})
 add_executable(listener ${SOURCES}) 
 
 target_link_libraries(pointfilter ${PCL_LIBRARIES})
-target_link_libraries(listener ${PCL_LIBRARIES}) 
+target_link_libraries(cluster ${PCL_LIBRARIES})
+target_link_libraries(listener ${PCL_LIBRARIES})
+
 ament_target_dependencies(pointfilter rclcpp std_msgs pcl_conversions tf2 tf2_ros)
+ament_target_dependencies(cluster rclcpp std_msgs pcl_conversions)
 ament_target_dependencies(listener rclcpp sensor_msgs pcl_conversions)
 
 install(TARGETS
   pointfilter
+  cluster
   listener
   DESTINATION lib/${PROJECT_NAME})
 

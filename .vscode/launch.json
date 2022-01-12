@@ -4,6 +4,7 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
+
     // Example launch of a python file
     {
       "name": "Python: Current File",
@@ -38,13 +39,13 @@
       "id": "package",
       "type": "promptString",
       "description": "Package name",
-      "default": "examples_rclcpp_minimal_publisher"
+      "default": "lidar_perception"
     },
     {
       "id": "program",
       "type": "promptString",
       "description": "Program name",
-      "default": "publisher_member_function"
+      "default": ""
     }
   ]
 }

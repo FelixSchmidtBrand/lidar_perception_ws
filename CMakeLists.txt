@@ -41,23 +41,28 @@ add_definitions(${PCL_DEFINITIONS})
 #set sources
 set(SOURCES src/main.cpp src/minimal_subscriber.cpp src/include/minimal_subscriber.hpp src/include/PointXYZVI.hpp) 
 set(POINTFILTER_SOURCES src/PointFilter.cpp src/include/PointXYZVI.hpp)
+set(POINTFILTER_SOURCES_COPY src/PointFilter_copy.cpp)
 set(CLUSTER_SOURCES src/ClusterBuilder.cpp src/include/PointXYZVI.hpp)
 
 #add_executable(talker src/publisher_member_function.cpp)
 add_executable(pointfilter ${POINTFILTER_SOURCES})
+add_executable(pointfilter_copy ${POINTFILTER_SOURCES_COPY})
 add_executable(cluster ${CLUSTER_SOURCES})
 add_executable(listener ${SOURCES}) 
 
 target_link_libraries(pointfilter ${PCL_LIBRARIES})
+target_link_libraries(pointfilter_copy ${PCL_LIBRARIES})
 target_link_libraries(cluster ${PCL_LIBRARIES})
 target_link_libraries(listener ${PCL_LIBRARIES})
 
 ament_target_dependencies(pointfilter rclcpp std_msgs pcl_conversions tf2 tf2_ros)
+ament_target_dependencies(pointfilter_copy rclcpp std_msgs pcl_conversions tf2 tf2_ros)
 ament_target_dependencies(cluster rclcpp std_msgs pcl_conversions)
 ament_target_dependencies(listener rclcpp sensor_msgs pcl_conversions)
 
 install(TARGETS
   pointfilter
+  pointfilter_copy
   cluster
   listener
   DESTINATION lib/${PROJECT_NAME})

@@ -3,6 +3,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
+
 #include <pcl/segmentation/conditional_euclidean_clustering.h>
 #include <pcl/search/kdtree.h>
 
@@ -37,10 +38,10 @@ class ClusterBuilder : public rclcpp::Node
 
       //parameters
       //this->declare_parameter<std::string>("input_frame", "input_frame");
-      this->declare_parameter<int>("rec_min_cluster_size", 5);
-      this->declare_parameter<int>("rec_max_cluster_size", 100);
-      this->declare_parameter<float>("max_vel_deviation", 1.f);
-      this->declare_parameter<float>("tolerance", 500.f);
+      this->declare_parameter<int>("rec_min_cluster_size", 3);
+      this->declare_parameter<int>("rec_max_cluster_size", 50);
+      this->declare_parameter<float>("max_vel_deviation", 0.5);
+      this->declare_parameter<float>("tolerance", 5.f);
      
       timer_ = this->create_wall_timer(
         1000ms, std::bind(&ClusterBuilder::setParameters, this));
@@ -87,15 +88,16 @@ class ClusterBuilder : public rclcpp::Node
       euclidean_cluster_extractor_->setMaxClusterSize(rec_max_cluster_size);
       euclidean_cluster_extractor_->setConditionFunction(&ClusterBuilder::enforceDopplerVelocitySimilarity);
       euclidean_cluster_extractor_->setClusterTolerance(tolerance);
-      RCLCPP_INFO(this->get_logger(), "Cluster points min-max set to: x %i - %i, \n"
-                                      " Velocity max deviation set to: %f",
-                                       rec_min_cluster_size,rec_max_cluster_size, max_vel_deviation);
+      //RCLCPP_INFO(this->get_logger(), "Cluster points min-max set to: x %i - %i, \n"
+      //                                " Velocity max deviation set to: %f",
+      //                                 rec_min_cluster_size,rec_max_cluster_size, max_vel_deviation);
     }
 
     void topic_callback(const sensor_msgs::msg::PointCloud2::SharedPtr point_cloud2_msgs) const
     {   
+      
+     
       //----------deserialize--------------
-
       pcl::PointCloud<PointXYZVI> input_cloud;
       fromROSMsg(*point_cloud2_msgs, input_cloud);
       RCLCPP_INFO(this->get_logger(), "Received point cloud length: %i", input_cloud.size());
@@ -103,7 +105,7 @@ class ClusterBuilder : public rclcpp::Node
       pcl::PointCloud<PointXYZVI>::Ptr cloud_to_cluster_(new pcl::PointCloud<PointXYZVI>(input_cloud));
       euclidean_cluster_extractor_->setInputCloud(cloud_to_cluster_);
       euclidean_cluster_extractor_->segment(*clusters_);
-      
+      RCLCPP_INFO(this->get_logger(), "Number of generated clusters: %i", clusters_->size());
       //quick hack visualization over intensity channel
       for (const auto& cluster : (*clusters_))
       {
@@ -113,6 +115,7 @@ class ClusterBuilder : public rclcpp::Node
       }
 
       //--------serialize---------------
+      
       pcl::PointCloud<PointXYZVI> cloud_out;
       sensor_msgs::msg::PointCloud2 output_cloud;
       pcl::copyPointCloud(*cloud_to_cluster_, *clusters_, cloud_out); 		

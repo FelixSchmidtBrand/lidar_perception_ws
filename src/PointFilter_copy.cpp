@@ -19,6 +19,7 @@
 #include <pcl/filters/passthrough.h>   
 #include <pcl/filters/impl/passthrough.hpp>
 
+#include <pcl/filters/voxel_grid.h>
 #include "pcl_conversions/pcl_conversions.h"
 
 
@@ -39,7 +40,7 @@ class PointFilterCopy : public rclcpp::Node
       subscription_ = this->create_subscription<sensor_msgs::msg::PointCloud2> (
       "input_cloud", 10, std::bind(&PointFilterCopy::topic_callback, this, std::placeholders::_1)
       );
-      publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("filtered_cloud_copy", 10); 
+      publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("filtered_cloud", 10); 
       
       //tf2 listener
       tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
@@ -50,6 +51,7 @@ class PointFilterCopy : public rclcpp::Node
       vel_filter_ = new pcl::PassThrough<pcl::PCLPointCloud2>();
       vel_filter_ ->setFilterFieldName("velocity");
       vel_filter_ ->setNegative(true);
+      sor_ = std::make_unique<pcl::VoxelGrid<pcl::PCLPointCloud2>>();
       
       //parameters
       this->declare_parameter<std::string>("input_frame", "input_frame");
@@ -61,6 +63,7 @@ class PointFilterCopy : public rclcpp::Node
       this->declare_parameter<float>("box_max_z", 10.f);
       this->declare_parameter<float>("vel_min", -0.1f);
       this->declare_parameter<float>("vel_max", 0.1f);
+      this->declare_parameter<float>("voxel_size", 0.3f);
 
       timer_ = this->create_wall_timer(
       10000ms, std::bind(&PointFilterCopy::setParameters, this));
@@ -78,11 +81,13 @@ class PointFilterCopy : public rclcpp::Node
       this->get_parameter("box_max_z", box_max_z);
       this->get_parameter("vel_low", vel_low);
       this->get_parameter("vel_high", vel_high);
+      this->get_parameter("voxel_size", voxel_size);
       min_pt << box_min_x, box_min_y, box_min_z, 1.f;
       max_pt << box_max_x, box_max_y, box_max_z, 1.f;
       cropBoxFilter_->setMin(min_pt);
       cropBoxFilter_->setMax(max_pt);
       vel_filter_ ->setFilterLimits(vel_low, vel_high);
+      sor_->setLeafSize (voxel_size, voxel_size, voxel_size);
       //RCLCPP_INFO(this->get_logger(), "Filter box parameter set to: x %f - %f, y %f - %f, z %f - %f \n"
       //                                " Velocity filter set to: %f - %f",
       //                                 box_min_x,box_max_x, box_min_y,box_max_y, box_min_z,box_max_z, vel_low, vel_high);
@@ -97,7 +102,6 @@ class PointFilterCopy : public rclcpp::Node
     std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
     std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
 
-    
     //listener parameters
     std::string fromFrameRel;
     std::string toFrameRel = "world";
@@ -108,6 +112,7 @@ class PointFilterCopy : public rclcpp::Node
     Eigen::Vector4f max_pt;
     pcl::PassThrough<pcl::PCLPointCloud2> * vel_filter_;
     rclcpp::TimerBase::SharedPtr timer_;
+    std::unique_ptr<pcl::VoxelGrid<pcl::PCLPointCloud2>> sor_;
     
     //filter parameter
     float box_min_x;
@@ -119,6 +124,8 @@ class PointFilterCopy : public rclcpp::Node
 
     float vel_low;
     float vel_high;
+
+    float voxel_size;
 
     void topic_callback(const sensor_msgs::msg::PointCloud2::SharedPtr point_cloud2_msgs) const
     {    
@@ -146,6 +153,7 @@ class PointFilterCopy : public rclcpp::Node
             toFrameRel.c_str(), fromFrameRel.c_str(), ex.what());
           return;
         }
+     
       
       Eigen::Affine3f transform;
       Eigen::AngleAxisf rotation;
@@ -159,39 +167,43 @@ class PointFilterCopy : public rclcpp::Node
       t = translation * rotation;
       cropBoxFilter_->setTransform(t);  
       
-      //---------filter-------------
+      //---------filter-----------
       //I don't like copying the data, but I have not found another way to get the pointcloud behind a shared Ptr.
       //pcl::PointCloud<PointXYZVI>::Ptr boxfilter_cloud(new pcl::PointCloud<PointXYZVI>(input_cloud));
       //pcl::PointCloud<PointXYZVI>::Ptr vel_cloud(new pcl::PointCloud<PointXYZVI>(cloud_out));
       
+      pcl::PCLPointCloud2::Ptr boxfiltered_cloud (new pcl::PCLPointCloud2());
+      pcl::PCLPointCloud2::Ptr velocity_filtered_cloud (new pcl::PCLPointCloud2());
       pcl::PCLPointCloud2::Ptr output_cloud (new pcl::PCLPointCloud2());
-
-      pcl::PCLPointCloud2* cloud = new pcl::PCLPointCloud2; 
+      pcl::PCLPointCloud2* cloud = new pcl::PCLPointCloud2(); 
       //pcl::PCLPointCloud2 cloud_filtered;
-
+      //Performance note: Not sure if PCLPointCloud2ConstPtr copies the data - if so this should be optimized
       pcl_conversions::toPCL(*point_cloud2_msgs, *cloud);
+      //pcl::PCLPointCloud2::Ptr input_cloud (new pcl::PCLPointCloud2());
       pcl::PCLPointCloud2ConstPtr cloudPtr(cloud);
       cropBoxFilter_ ->setInputCloud(cloudPtr);
-      cropBoxFilter_ ->filter(*output_cloud);
-      
-      vel_filter_ ->setInputCloud(output_cloud);
-      vel_filter_ ->filter(*output_cloud);
-     
-      //--------serialize---------------
+      cropBoxFilter_ ->filter(*boxfiltered_cloud);
+      //----------velocity based filtering-------------
+      pcl::PCLPointCloud2ConstPtr vel_input_cloudPtr(boxfiltered_cloud);
+      vel_filter_ ->setInputCloud(vel_input_cloudPtr);
+      vel_filter_ ->filter(*velocity_filtered_cloud);
+      //----------down sampling------------
+      pcl::PCLPointCloud2ConstPtr voxel_input_cloudPtr(velocity_filtered_cloud);
+      sor_->setInputCloud (voxel_input_cloudPtr);
+      sor_->filter (*output_cloud);
+
+      //----------serialize---------------
       sensor_msgs::msg::PointCloud2 output;
       pcl_conversions::fromPCL(*output_cloud, output);
       publisher_->publish(output);
 
+      //Get runtime info
       auto t2 = high_resolution_clock::now();
-
-      /* Getting number of milliseconds as an integer. */
-      auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-      /* Getting number of milliseconds as a double. */
       duration<double, std::milli> ms_double = t2 - t1;
 
-      std::cout << ms_int.count() << "ms\n";
-      std::cout << ms_double.count() << "ms\n";
+      RCLCPP_INFO(
+        this->get_logger(), "Pointfilter took %f ms to complete",
+            ms_double.count());
     }
 };
 
